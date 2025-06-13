@@ -56,7 +56,7 @@ export const Sidebar: FC<SidebarProps> = ({
 
     setLoading(true);
     try {
-      const response = await fetch(`/api/users?query=${encodeURIComponent(query.trim())}`);
+      const response = await fetch(`/api/users/search?query=${encodeURIComponent(query.trim())}`);
       if (response.ok) {
         const data = await response.json();
         setUsers(data);
@@ -148,7 +148,7 @@ export const Sidebar: FC<SidebarProps> = ({
               ) : (
                 users.map((user) => (
                   <div
-                    key={user.id}
+                    key={user._id}
                     className="flex items-center justify-between p-2 border rounded-lg hover:bg-gray-100"
                   >
                     <div className="flex items-center space-x-3">
@@ -161,10 +161,10 @@ export const Sidebar: FC<SidebarProps> = ({
                     </div>
                     <Button
                       size="sm"
-                      onClick={() => addUserToChat(user.id)}
-                      disabled={addingUserId === user.id}
+                      onClick={() => addUserToChat(user._id)}
+                      disabled={addingUserId === user._id}
                     >
-                      {addingUserId === user.id ? "Adding..." : "Add"}
+                      {addingUserId === user._id ? "Adding..." : "Add"}
                     </Button>
                   </div>
                 ))
@@ -203,7 +203,7 @@ export const Sidebar: FC<SidebarProps> = ({
               ) : (
                 chatUsers.map((user) => (
                   <div
-                    key={user.id}
+                    key={user._id}
                     className={`p-3 rounded-xl transition cursor-pointer border-gray-400
                       ${selectedUser?.id === user.id
                         ? "bg-zinc-300"

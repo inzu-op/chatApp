@@ -104,7 +104,7 @@ export const ChatWindow: FC<ChatWindowProps> = ({
       ) : (
         <>
           {/* Chat Header */}
-          <div className="border border-gray-400 mt-5 p-4 bg-white flex justify-between items-center gap-4">
+          <div className="border border-gray-400 mt-5 p-2 bg-white flex justify-between items-center gap-4">
   {/* Left: User Icon + Name */}
   <div className="flex items-center gap-2">
     <div className="w-8 h-8 bg-gray-300 rounded-md flex items-center justify-center">
