@@ -119,7 +119,7 @@ export const Sidebar: FC<SidebarProps> = ({
       {/* Add User Popup */}
       {isAddUserPopupOpen && (
         <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-md rounded-xl shadow-lg p-5 relative">
+          <div className="bg-white  w-full max-w-md rounded-xl shadow-lg p-5 relative">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center space-x-2">
                 <UserPlus className="w-5 h-5 text-black" />
@@ -179,14 +179,14 @@ export const Sidebar: FC<SidebarProps> = ({
         initial={{ width: 0 }}
         animate={{ width: isOpen ? 400 : 0 }}
         transition={{ duration: 0.3 }}
-        className="bg-white border-r border-gray-400 shadow-md overflow-hidden h-full"
+        className="bg-white dark:bg-black dark:text-white border-r border-gray-400 shadow-md overflow-hidden h-full"
       >
         <div className="flex flex-col h-full">
           <div className="p-4  border-gray-400">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-gray-800">Users</h2>
+              <h2 className="text-lg font-semibold text-gray-800 dark:text-white">Users</h2>
               <Button variant="ghost" size="icon" onClick={() => setIsOpen(false)}>
-                <X className="h-5 w-5 text-gray-600" />
+                <X className="h-5 w-5 text-gray-600 dark:text-white" />
               </Button>
             </div>
             <Button className="w-full" onClick={() => setIsAddUserPopupOpen(true)}>
@@ -196,29 +196,29 @@ export const Sidebar: FC<SidebarProps> = ({
           </div>
 
           <div className="overflow-y-auto flex-1 p-4">
-            <h3 className="text-sm font-medium text-gray-500 mb-2">Chat Users</h3>
+            <h3 className="text-sm font-medium text-gray-500 mb-2 dark:text-white">Chat Users</h3>
             <div className="space-y-2">
               {chatUsers.length === 0 ? (
-                <div className="text-center text-gray-500">No users added to chat</div>
+                <div className="text-center text-gray-500 dark:text-white">No users added to chat</div>
               ) : (
                 chatUsers.map((user) => (
                   <div
-                    key={user._id}
-                    className={`p-3 rounded-xl transition cursor-pointer border-gray-400
+                    key={user.id}
+                    className={`p-3 rounded-xl transition cursor-pointer border-gray-400 dark:border-gray-900
                       ${selectedUser?.id === user.id
-                        ? "bg-zinc-300"
-                        : "hover:bg-gray-100  border-transparent"
+                        ? "bg-zinc-300 dark:bg-zinc-300 dark:text-black"
+                        : "hover:bg-gray-100 dark:hover:bg-gray-300 border-transparent dark:text-black"
                       }`}
                     onClick={() => setSelectedUser(user)}
                   >
                     <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center">
-                        <span className="text-lg font-medium text-gray-600">
+                      <div className="w-10 h-10 bg-gray-300 dark:bg-gray-900  rounded-full flex items-center justify-center">
+                        <span className="text-lg font-medium text-gray-600 dark:text-white">
                           {user.name.charAt(0).toUpperCase()}
                         </span>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium text-gray-800 truncate">{user.name}</p>
+                      <div className="flex-1 min-w-0 ">
+                        <p className="font-medium text-gray-800 truncate dark:text-black">{user.name}</p>
                       </div>
                     </div>
                   </div>

@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { User } from '@/app/types';
 import { useRouter } from 'next/navigation';
 import { getSession } from "@/lib/auth";
+import { ThemeToggle } from '@/app/components/theme-toggle';
 
 interface NavbarProps {
   onMenuClick: () => void;
@@ -73,33 +74,38 @@ const Navbar: React.FC<NavbarProps> = ({
   };
 
   return (
-    <div className="relative bg-white rounded-b-2xl shadow-sm z-10">
+    <div className="relative bg-white dark:bg-black rounded-b-2xl shadow-sm z-10">
       {!isOpen && (
         <Button
           variant="ghost"
           size="icon"
           onClick={onMenuClick}
-          className="absolute top-2 left-4 z-20 hover:bg-gray-100 transition-all"
+          className="absolute top-2 left-4 z-20 hover:bg-gray-100 dark:hover:bg-gray-900 transition-all"
         >
-          <Menu className="h-5 w-5" />
+          <Menu className="h-5 w-5 text-black dark:text-white" />
         </Button>
       )}
+
+      {/* Theme Toggle */}
+      <div className="absolute top-2 right-16 z-20">
+        <ThemeToggle />
+      </div>
 
       {/* About Button */}
       <Button
         variant="ghost"
         size="icon"
         onClick={() => setShowAbout(true)}
-        className="absolute top-2 right-4 z-20 bg-white hover:bg-gray-100 rounded-full transition-all"
+        className="absolute top-2 right-4 z-20 bg-white dark:bg-black hover:bg-gray-100 dark:hover:bg-gray-900 rounded-full transition-all"
       >
-        <UserCog2 className="h-6 w-6 text-black" />
+        <UserCog2 className="h-6 w-6 text-black dark:text-white" />
       </Button>
 
       {/* User Switch Row */}
       <div className="rotate-180">
-        <div className="w-full h-12 relative overflow-hidden bg-white rounded-b-2xl shadow">
+        <div className="w-full h-12 relative overflow-hidden bg-white dark:bg-black dark:text-white rounded-b-2xl shadow">
           <div
-            className="absolute inset-0 bg-black rounded-xl"
+            className="absolute inset-0 bg-black dark:bg-white rounded-xl"
             style={{
               clipPath: "polygon(25% 0%, 75% 0%, 85% 100%, 15% 100%)",
             }}
@@ -114,9 +120,9 @@ const Navbar: React.FC<NavbarProps> = ({
                       key={`${user.id}-${index}`}
                       title={user.email}
                       variant="ghost"
-                      className={`w-9 h-9 p-0 rounded-md bg-white hover:bg-gray-200 
-                        text-black font-semibold shadow-md transition-all ease-in-out duration-200 
-                        ${isSelected ? 'ring-2 ring-white scale-110' : 'opacity-60 hover:opacity-90'}
+                      className={`w-9 h-9 p-0 rounded-md bg-white dark:bg-black hover:bg-gray-200 dark:hover:bg-gray-900
+                        text-black dark:text-white font-semibold shadow-md transition-all ease-in-out duration-200 
+                        ${isSelected ? 'ring-2 ring-white dark:ring-gray-900 scale-110' : 'opacity-60 hover:opacity-90'}
                       `}
                       onClick={() => onUserSelect(user)}
                     >
@@ -125,7 +131,7 @@ const Navbar: React.FC<NavbarProps> = ({
                   );
                 })
               ) : (
-                <span className="text-white">No Users</span>
+                <span className="text-white dark:text-black">No Users</span>
               )}
             </div>
           </div>
@@ -134,31 +140,31 @@ const Navbar: React.FC<NavbarProps> = ({
 
       {/* About Modal */}
       {showAbout && (
-        <div className="fixed inset-0 bg-black/40 flex items-start justify-center pt-24 z-50">
-          <div className="bg-white rounded-xl shadow-2xl w-96 p-6 relative">
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-start justify-center pt-24 z-50">
+          <div className="bg-white dark:bg-black rounded-xl shadow-2xl w-96 p-6 relative">
             <Button
               variant="ghost"
               size="icon"
               onClick={() => setShowAbout(false)}
-              className="absolute top-2 right-2 hover:bg-gray-200 rounded-full"
+              className="absolute top-2 right-2 hover:bg-gray-200 dark:hover:bg-gray-900 rounded-full"
             >
-              <X className="h-5 w-5 text-gray-600" />
+              <X className="h-5 w-5 text-gray-600 dark:text-gray-400" />
             </Button>
 
             {currentUser ? (
               <div className="space-y-6">
                 <div className="text-center">
-                  <div className="w-24 h-24 rounded-full bg-black mx-auto flex items-center justify-center text-white text-4xl font-bold mb-4 shadow-md">
+                  <div className="w-24 h-24 rounded-full bg-black dark:bg-white mx-auto flex items-center justify-center text-white dark:text-black text-4xl font-bold mb-4 shadow-md">
                     {currentUser.name.charAt(0).toUpperCase()}
                   </div>
-                  <h2 className="text-xl font-semibold text-gray-800">{currentUser.name}</h2>
-                  <p className="text-gray-500 text-sm">{currentUser.email}</p>
+                  <h2 className="text-xl font-semibold text-gray-800 dark:text-white">{currentUser.name}</h2>
+                  <p className="text-gray-500 dark:text-gray-400 text-sm">{currentUser.email}</p>
                 </div>
 
                 <div className="space-y-3">
                   <Button
                     variant="outline"
-                    className="w-full justify-center text-red-600 hover:text-red-700 hover:bg-red-50"
+                    className="w-full justify-center text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20"
                     onClick={handleClearChat}
                   >
                     <Trash2 className="mr-2 h-4 w-4" />
@@ -188,7 +194,7 @@ const Navbar: React.FC<NavbarProps> = ({
             ) : (
               <div className="flex flex-col items-center py-10">
                 <Loader2 className="h-6 w-6 animate-spin text-gray-400 mb-2" />
-                <p className="text-gray-500">Loading user data...</p>
+                <p className="text-gray-500 dark:text-gray-400">Loading user data...</p>
               </div>
             )}
           </div>
