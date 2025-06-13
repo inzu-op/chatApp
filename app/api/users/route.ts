@@ -4,30 +4,47 @@ import User from '@/models/User';
 import bcrypt from 'bcryptjs';
 import { getSession } from "@/lib/auth";
 
-export async function GET(request: Request) {
+export async function GET() {
   try {
-    const { searchParams } = new URL(request.url);
-    const query = searchParams.get('query') || '';
+    const session = await getSession();
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
     await connectDB();
 
-    const users = await User.find(
-      { name: query }, // Exact match instead of regex
-      { password: 0 } // Exclude password from results
-    );
-    
-    // Transform the response to match our frontend User type
-    const transformedUsers = users.map(user => ({
-      _id: user._id.toString(),
-      name: user.name,
-      email: user.email
+    // Get the current user with populated chatUsers
+    const currentUser = await User.findById(session.userId)
+      .populate({
+        path: 'chatUsers.userId',
+        select: 'name email'
+      });
+
+    if (!currentUser) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    // Transform the chatUsers array to include pinned status
+    const users = currentUser.chatUsers.map((chatUser: any) => ({
+      _id: chatUser.userId._id,
+      name: chatUser.userId.name,
+      email: chatUser.userId.email,
+      pinned: chatUser.pinned,
+      addedAt: chatUser.addedAt
     }));
-    
-    return NextResponse.json(transformedUsers);
+
+    // Sort users: pinned first, then by addedAt
+    const sortedUsers = users.sort((a: any, b: any) => {
+      if (a.pinned && !b.pinned) return -1;
+      if (!a.pinned && b.pinned) return 1;
+      return new Date(b.addedAt).getTime() - new Date(a.addedAt).getTime();
+    });
+
+    return NextResponse.json(sortedUsers);
   } catch (error) {
-    console.error('Error searching users:', error);
+    console.error("Error fetching users:", error);
     return NextResponse.json(
-      { error: 'Failed to search users' },
+      { error: "Failed to fetch users" },
       { status: 500 }
     );
   }

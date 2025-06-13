@@ -108,7 +108,7 @@ export const ChatWindow: FC<ChatWindowProps> = ({
   {/* Left: User Icon + Name */}
   <div className="flex items-center gap-2">
     <div className="w-8 h-8 bg-gray-300 rounded-md flex items-center justify-center">
-      <span className="rounded-md text-sm font-medium text-gray-600">
+      <span className="text-sm font-medium text-gray-600">
         {selectedUser.name.charAt(0).toUpperCase()}
       </span>
     </div>

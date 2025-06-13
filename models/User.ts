@@ -26,6 +26,10 @@ const UserSchema = new mongoose.Schema(
       addedAt: {
         type: Date,
         default: Date.now
+      },
+      pinned: {
+        type: Boolean,
+        default: false
       }
     }]
   },

@@ -148,12 +148,12 @@ export const Sidebar: FC<SidebarProps> = ({
               ) : (
                 users.map((user) => (
                   <div
-                    key={user._id}
+                    key={user.id}
                     className="flex items-center justify-between p-2 border rounded-lg hover:bg-gray-100"
                   >
                     <div className="flex items-center space-x-3">
                       <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
-                        <span className="text-sm font-medium text-gray-600 ">
+                        <span className="text-sm font-medium text-gray-600">
                           {user.name.charAt(0).toUpperCase()}
                         </span>
                       </div>
@@ -161,10 +161,10 @@ export const Sidebar: FC<SidebarProps> = ({
                     </div>
                     <Button
                       size="sm"
-                      onClick={() => addUserToChat(user._id)}
-                      disabled={addingUserId === user._id}
+                      onClick={() => addUserToChat(user.id)}
+                      disabled={addingUserId === user.id}
                     >
-                      {addingUserId === user._id ? "Adding..." : "Add"}
+                      {addingUserId === user.id ? "Adding..." : "Add"}
                     </Button>
                   </div>
                 ))
@@ -203,15 +203,15 @@ export const Sidebar: FC<SidebarProps> = ({
               ) : (
                 chatUsers.map((user) => (
                   <div
-                    key={user._id}
+                    key={user.id}
                     className={`p-3 rounded-xl transition cursor-pointer border-gray-400
-                      ${selectedUser?._id === user._id
-                        ? "bg-zinc-200 "
+                      ${selectedUser?.id === user.id
+                        ? "bg-zinc-300"
                         : "hover:bg-gray-100  border-transparent"
                       }`}
                     onClick={() => setSelectedUser(user)}
                   >
-                    <div className="flex items-center space-x-3 hover:scale-105 transition-all duration-300 ease-in-out">
+                    <div className="flex items-center space-x-3">
                       <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center">
                         <span className="text-lg font-medium text-gray-600">
                           {user.name.charAt(0).toUpperCase()}

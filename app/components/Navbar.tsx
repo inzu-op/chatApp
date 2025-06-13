@@ -1,17 +1,20 @@
 "use client";
 import React, { useState } from 'react';
 import {
-  Menu, LogOut, Trash2, X, Loader2,
+  Menu, User as UserIcon, LogOut, Trash2, X, Loader2,
+  Info,
+  UserCog,
   UserCog2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { User } from '@/app/types';
-import { useRouter } from "next/navigation";
+import { useRouter } from 'next/navigation';
+import { getSession } from "@/lib/auth";
 
 interface NavbarProps {
   onMenuClick: () => void;
   selectedUser: User | null;
-  chatUsers?: User[];
+  chatUsers: User[];
   isOpen: boolean;
   onUserSelect: (user: User) => void;
   currentUser: User | null;
@@ -32,24 +35,32 @@ const Navbar: React.FC<NavbarProps> = ({
   const handleLogout = async () => {
     try {
       setIsLoading(true);
-
+      
+      // Call logout API
       const response = await fetch("/api/auth/logout", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include", // Important: include credentials
       });
 
-      if (!response.ok) throw new Error("Logout failed");
+      if (!response.ok) {
+        throw new Error("Logout failed");
+      }
 
+      // Clear all client-side storage
       localStorage.clear();
       sessionStorage.clear();
-
+      
+      // Clear any cookies that might be set
       document.cookie.split(";").forEach((c) => {
         document.cookie = c
           .replace(/^ +/, "")
           .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
       });
 
+      // Force a complete page reload and redirect
       window.location.replace("/login");
     } catch (error) {
       console.error("Logout error:", error);
@@ -58,8 +69,7 @@ const Navbar: React.FC<NavbarProps> = ({
   };
 
   const handleClearChat = () => {
-    console.log("Clear chat clicked");
-    // Implement chat clearing logic here
+    console.log('Clear chat clicked');
   };
 
   return (
@@ -75,6 +85,7 @@ const Navbar: React.FC<NavbarProps> = ({
         </Button>
       )}
 
+      {/* About Button */}
       <Button
         variant="ghost"
         size="icon"
@@ -84,6 +95,7 @@ const Navbar: React.FC<NavbarProps> = ({
         <UserCog2 className="h-6 w-6 text-black" />
       </Button>
 
+      {/* User Switch Row */}
       <div className="rotate-180">
         <div className="w-full h-12 relative overflow-hidden bg-white rounded-b-2xl shadow">
           <div
@@ -94,32 +106,33 @@ const Navbar: React.FC<NavbarProps> = ({
           />
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="flex gap-3 rotate-180">
-              {chatUsers?.map((user, index) => {
-                const isSelected = selectedUser?._id === user._id;
-
-                return (
-                  <button
-                    key={`${user._id}-${index}`}
-                    title={user.name}
-                    onClick={() => onUserSelect(user)}
-                    className={`
-                      w-8 h-8 rounded-md flex items-center justify-center
-                      bg-white text-black font-semibold shadow-md
-                      transform transition-all duration-300 ease-in-out
-                      ${isSelected ? "ring-2 ring-black scale-110" : "scale-90 opacity-60"}
-                      hover:opacity-90 hover:bg-gray-100 hover:scale-100
-                      active:scale-95
-                    `}
-                  >
-                    {user.name.charAt(0).toUpperCase()}
-                  </button>
-                );
-              })}
+              {Array.isArray(chatUsers) && chatUsers.length > 0 ? (
+                chatUsers.map((user, index) => {
+                  const isSelected = selectedUser?.id === user.id;
+                  return (
+                    <Button
+                      key={`${user.id}-${index}`}
+                      title={user.email}
+                      variant="ghost"
+                      className={`w-9 h-9 p-0 rounded-md bg-white hover:bg-gray-200 
+                        text-black font-semibold shadow-md transition-all ease-in-out duration-200 
+                        ${isSelected ? 'ring-2 ring-white scale-110' : 'opacity-60 hover:opacity-90'}
+                      `}
+                      onClick={() => onUserSelect(user)}
+                    >
+                      {user.name.charAt(0).toUpperCase()}
+                    </Button>
+                  );
+                })
+              ) : (
+                <span className="text-white">No Users</span>
+              )}
             </div>
           </div>
         </div>
       </div>
 
+      {/* About Modal */}
       {showAbout && (
         <div className="fixed inset-0 bg-black/40 flex items-start justify-center pt-24 z-50">
           <div className="bg-white rounded-xl shadow-2xl w-96 p-6 relative">
@@ -135,7 +148,7 @@ const Navbar: React.FC<NavbarProps> = ({
             {currentUser ? (
               <div className="space-y-6">
                 <div className="text-center">
-                  <div className="rounded-m bg-black mx-auto flex items-center justify-center text-white text-4xl font-bold mb-4 shadow-md transform transition-all duration-300 ease-in-out scale-110 hover:scale-125 hover:shadow-lg">
+                  <div className="w-24 h-24 rounded-full bg-black mx-auto flex items-center justify-center text-white text-4xl font-bold mb-4 shadow-md">
                     {currentUser.name.charAt(0).toUpperCase()}
                   </div>
                   <h2 className="text-xl font-semibold text-gray-800">{currentUser.name}</h2>

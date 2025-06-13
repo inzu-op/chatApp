@@ -10,7 +10,7 @@ export default async function middleware(req: NextRequest) {
   const isAuthRoute = authRoutes.includes(path)
 
   const token = req.cookies.get("auth-token")?.value
-
+ 
   // If no token is present and trying to access protected route, redirect to login
   if (isProtectedRoute && !token) {
     return NextResponse.redirect(new URL("/login", req.nextUrl))
@@ -25,8 +25,8 @@ export default async function middleware(req: NextRequest) {
       console.error("Token verification error:", error)
       // If token is invalid and trying to access protected route, redirect to login
       if (isProtectedRoute) {
-        return NextResponse.redirect(new URL("/login", req.nextUrl))
-      }
+    return NextResponse.redirect(new URL("/login", req.nextUrl))
+  }
     }
   }
 
