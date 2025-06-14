@@ -118,22 +118,22 @@ export const Sidebar: FC<SidebarProps> = ({
     <>
       {/* Add User Popup */}
       {isAddUserPopupOpen && (
-        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white  w-full max-w-md rounded-xl shadow-lg p-5 relative">
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-[#0a0a0a] w-full max-w-md rounded-xl shadow-lg p-5 relative">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center space-x-2">
-                <UserPlus className="w-5 h-5 text-black" />
-                <h3 className="text-lg font-semibold text-gray-800">Add User</h3>
+                <UserPlus className="w-5 h-5 text-black dark:text-[#e0e0e0]" />
+                <h3 className="text-lg font-semibold text-gray-800 dark:text-[#e0e0e0]">Add User</h3>
               </div>
-              <Button variant="ghost" size="icon" onClick={closeAddUserPopup}>
-                <X className="h-5 w-5 text-gray-600" />
+              <Button variant="ghost" size="icon" onClick={closeAddUserPopup} className="hover:bg-gray-100 dark:hover:bg-[#1a1a1a]">
+                <X className="h-5 w-5 text-gray-600 dark:text-[#e0e0e0]" />
               </Button>
             </div>
 
             <div className="relative mb-4">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-[#a0a0a0]" />
               <Input
-                className="pl-9"
+                className="pl-9 dark:bg-[#1a1a1a] dark:text-[#e0e0e0] dark:border-[#2d2d2d] dark:placeholder:text-[#808080]"
                 placeholder="Enter username..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -142,27 +142,28 @@ export const Sidebar: FC<SidebarProps> = ({
 
             <div className="max-h-60 overflow-y-auto space-y-2">
               {loading ? (
-                <p className="text-center text-gray-500">Searching...</p>
+                <p className="text-center text-gray-500 dark:text-[#a0a0a0]">Searching...</p>
               ) : users.length === 0 ? (
-                <p className="text-center text-gray-500">No matching users found</p>
+                <p className="text-center text-gray-500 dark:text-[#a0a0a0]">No matching users found</p>
               ) : (
                 users.map((user) => (
                   <div
                     key={user._id}
-                    className="flex items-center justify-between p-2 border rounded-lg hover:bg-gray-100"
+                    className="flex items-center justify-between p-2 border rounded-lg hover:bg-gray-100 dark:hover:bg-[#1a1a1a] dark:border-[#2d2d2d]"
                   >
                     <div className="flex items-center space-x-3">
-                      <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
-                        <span className="text-sm font-medium text-gray-600">
+                      <div className="w-8 h-8 bg-gray-300 dark:bg-[#1a1a1a] rounded-full flex items-center justify-center">
+                        <span className="text-sm font-medium text-gray-600 dark:text-[#e0e0e0]">
                           {user.name.charAt(0).toUpperCase()}
                         </span>
                       </div>
-                      <span className="text-sm font-medium text-gray-800 border-b border-gray-400">{user.name}</span>
+                      <span className="text-sm font-medium text-gray-800 dark:text-[#e0e0e0] border-b border-gray-400 dark:border-[#2d2d2d]">{user.name}</span>
                     </div>
                     <Button
                       size="sm"
                       onClick={() => addUserToChat(user._id)}
                       disabled={addingUserId === user._id}
+                      className="hover:bg-gray-100 dark:hover:bg-[#1a1a1a]"
                     >
                       {addingUserId === user._id ? "Adding..." : "Add"}
                     </Button>
@@ -179,14 +180,14 @@ export const Sidebar: FC<SidebarProps> = ({
         initial={{ width: 0 }}
         animate={{ width: isOpen ? 400 : 0 }}
         transition={{ duration: 0.3 }}
-        className="bg-white dark:bg-black dark:text-white border-r border-gray-400 shadow-md overflow-hidden h-full"
+        className="bg-white dark:bg-[#1a1a1a] dark:text-[#e0e0e0] border-r border-gray-400 dark:border-[#2d2d2d] shadow-md overflow-hidden h-full"
       >
         <div className="flex flex-col h-full">
-          <div className="p-4  border-gray-400">
+          <div className="p-4 border-gray-400 dark:border-[#2d2d2d]">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-gray-800 dark:text-white">Users</h2>
+              <h2 className="text-lg font-semibold text-gray-800 dark:text-[#e0e0e0]">Users</h2>
               <Button variant="ghost" size="icon" onClick={() => setIsOpen(false)}>
-                <X className="h-5 w-5 text-gray-600 dark:text-white" />
+                <X className="h-5 w-5 text-gray-600 dark:text-[#e0e0e0]" />
               </Button>
             </div>
             <Button className="w-full" onClick={() => setIsAddUserPopupOpen(true)}>
@@ -196,29 +197,29 @@ export const Sidebar: FC<SidebarProps> = ({
           </div>
 
           <div className="overflow-y-auto flex-1 p-4">
-            <h3 className="text-sm font-medium text-gray-500 mb-2 dark:text-white">Chat Users</h3>
+            <h3 className="text-sm font-medium text-gray-500 mb-2 dark:text-[#a0a0a0]">Chat Users</h3>
             <div className="space-y-2">
               {chatUsers.length === 0 ? (
-                <div className="text-center text-gray-500 dark:text-white">No users added to chat</div>
+                <div className="text-center text-gray-500 dark:text-[#a0a0a0]">No users added to chat</div>
               ) : (
                 chatUsers.map((user) => (
                   <div
                     key={user.id}
-                    className={`p-3 rounded-xl transition cursor-pointer border-gray-400 dark:border-gray-900
+                    className={`p-3 rounded-xl transition cursor-pointer border-gray-400 dark:border-[#2d2d2d]
                       ${selectedUser?.id === user.id
-                        ? "bg-zinc-300 dark:bg-zinc-300 dark:text-black"
-                        : "hover:bg-gray-100 dark:hover:bg-gray-300 border-transparent dark:text-black"
+                        ? "bg-zinc-300 dark:bg-[#2d2d2d] dark:text-[#e0e0e0]"
+                        : "hover:bg-gray-100 dark:hover:bg-[#2d2d2d] border-transparent dark:text-[#e0e0e0]"
                       }`}
                     onClick={() => setSelectedUser(user)}
                   >
                     <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 bg-gray-300 dark:bg-gray-900  rounded-full flex items-center justify-center">
-                        <span className="text-lg font-medium text-gray-600 dark:text-white">
+                      <div className="w-10 h-10 bg-gray-300 dark:bg-[#333333] rounded-full flex items-center justify-center">
+                        <span className="text-lg font-medium text-gray-600 dark:text-[#e0e0e0]">
                           {user.name.charAt(0).toUpperCase()}
                         </span>
                       </div>
-                      <div className="flex-1 min-w-0 ">
-                        <p className="font-medium text-gray-800 truncate dark:text-black">{user.name}</p>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-gray-800 truncate dark:text-[#e0e0e0]">{user.name}</p>
                       </div>
                     </div>
                   </div>
