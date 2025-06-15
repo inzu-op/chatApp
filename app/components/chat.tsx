@@ -247,10 +247,10 @@ export const ChatWindow: FC<ChatWindowProps> = ({
                   <div className="space-y-6">
                     <div className="text-center">
                       <div className="w-24 h-24 rounded-full bg-black dark:bg-[#1a1a1a] mx-auto flex items-center justify-center text-white dark:text-[#e0e0e0] text-4xl font-bold mb-4 shadow-md">
-                        {currentUser.name.charAt(0).toUpperCase()}
+                        {selectedUser.name.charAt(0).toUpperCase()}
                       </div>
-                      <h2 className="text-xl font-semibold text-gray-800 dark:text-[#e0e0e0]">{currentUser.name}</h2>
-                      <p className="text-gray-500 dark:text-[#a0a0a0] text-sm">{currentUser.email}</p>
+                      <h2 className="text-xl font-semibold text-gray-800 dark:text-[#e0e0e0]">{selectedUser.name}</h2>
+                      <p className="text-gray-500 dark:text-[#a0a0a0] text-sm">{selectedUser.email}</p>
                     </div>
 
                     <div className="space-y-3">
