@@ -32,15 +32,15 @@ export default function SignupPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-      <Card className="w-full max-w-md">
+      <Card className="w-full max-w-md bg-white border-0">
         <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold text-center">Create an account</CardTitle>
-          <CardDescription className="text-center">Enter your details below to create your account</CardDescription>
+          <CardTitle className="text-2xl font-bold text-center text-black">Create an account</CardTitle>
+          <CardDescription className="text-center text-black">Enter your details below to create your account</CardDescription>
         </CardHeader>
         <CardContent>
           <form action={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Full Name</Label>
+              <Label htmlFor="name" className="text-black">Full Name</Label>
               <div className="relative">
                 <User className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                 <Input
@@ -48,14 +48,14 @@ export default function SignupPage() {
                   name="name"
                   type="text"
                   placeholder="John Doe"
-                  className="pl-10"
+                  className="pl-10 bg-white text-black border-0"
                   required
                   disabled={isLoading}
                 />
               </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email" className="text-black">Email</Label>
               <div className="relative">
                 <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                 <Input
@@ -63,14 +63,14 @@ export default function SignupPage() {
                   name="email"
                   type="email"
                   placeholder="john@example.com"
-                  className="pl-10"
+                  className="pl-10 bg-white text-black border-0"
                   required
                   disabled={isLoading}
                 />
               </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password" className="text-black">Password</Label>
               <div className="relative">
                 <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                 <Input
@@ -78,7 +78,7 @@ export default function SignupPage() {
                   name="password"
                   type="password"
                   placeholder="••••••••"
-                  className="pl-10"
+                  className="pl-10 bg-white text-black border-0"
                   required
                   disabled={isLoading}
                   minLength={6}
@@ -90,7 +90,7 @@ export default function SignupPage() {
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
             )}
-            <Button type="submit" className="w-full" disabled={isLoading}>
+            <Button type="submit" className="w-full bg-black hover:bg-zinc-900 text-white" disabled={isLoading}>
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -103,9 +103,9 @@ export default function SignupPage() {
           </form>
         </CardContent>
         <CardFooter>
-          <p className="text-center text-sm text-gray-600 w-full">
+          <p className="text-center text-sm text-black w-full">
             Already have an account?{" "}
-            <Link href="/login" className="font-medium text-blue-600 hover:text-blue-500">
+            <Link href="/login" className="font-medium text-black hover:text-black">
               Sign in
             </Link>
           </p>

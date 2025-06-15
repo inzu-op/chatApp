@@ -30,15 +30,15 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-      <Card className="w-full max-w-md">
+      <Card className="w-full max-w-md bg-white border-0">
         <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold text-center">Welcome back</CardTitle>
-          <CardDescription className="text-center">Enter your credentials to access your account</CardDescription>
+          <CardTitle className="text-2xl font-bold text-center text-black">Welcome back</CardTitle>
+          <CardDescription className="text-center text-black">Enter your credentials to access your account</CardDescription>
         </CardHeader>
         <CardContent>
           <form action={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email" className="text-black">Email</Label>
               <div className="relative">
                 <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                 <Input
@@ -46,14 +46,14 @@ export default function LoginPage() {
                   name="email"
                   type="email"
                   placeholder="john@example.com"
-                  className="pl-10"
+                  className="pl-10 bg-white text-black border-0"
                   required
                   disabled={isLoading}
                 />
               </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password" className="text-black">Password</Label>
               <div className="relative">
                 <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                 <Input
@@ -61,7 +61,7 @@ export default function LoginPage() {
                   name="password"
                   type="password"
                   placeholder="••••••••"
-                  className="pl-10"
+                  className="pl-10 bg-white text-black border-0"
                   required
                   disabled={isLoading}
                 />
@@ -72,7 +72,7 @@ export default function LoginPage() {
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
             )}
-            <Button type="submit" className="w-full" disabled={isLoading}>
+            <Button type="submit" className="w-full bg-black hover:bg-zinc-900 text-white border-0" disabled={isLoading}>
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -85,9 +85,9 @@ export default function LoginPage() {
           </form>
         </CardContent>
         <CardFooter>
-          <p className="text-center text-sm text-gray-600 w-full">
+          <p className="text-center text-sm text-black w-full">
             {"Don't have an account?"}{" "}
-            <Link href="/signup" className="font-medium text-blue-600 hover:text-blue-500">
+            <Link href="/signup" className="font-medium text-black hover:text-black">
               Sign up
             </Link>
           </p>

@@ -11,7 +11,7 @@ interface SidebarProps {
   setSelectedUser: (user: User) => void;
   setIsOpen: (open: boolean) => void;
   currentUserId: string;
-  selectedUser: User | null; // 🆕 Add this
+  selectedUser: User | null;
 }
 
 export const Sidebar: FC<SidebarProps> = ({
@@ -33,6 +33,7 @@ export const Sidebar: FC<SidebarProps> = ({
       const response = await fetch(`/api/users/chat-users?userId=${currentUserId}`);
       if (response.ok) {
         const data = await response.json();
+        console.log("Fetched chat users:", data); // Debug log
         setChatUsers(data);
       } else {
         const error = await response.json();
@@ -59,6 +60,7 @@ export const Sidebar: FC<SidebarProps> = ({
       const response = await fetch(`/api/users/search?query=${encodeURIComponent(query.trim())}`);
       if (response.ok) {
         const data = await response.json();
+        console.log("Search results:", data); // Debug log
         setUsers(data);
       } else {
         const error = await response.json();
@@ -85,8 +87,32 @@ export const Sidebar: FC<SidebarProps> = ({
       });
 
       if (response.ok) {
-        const updatedChatUsers = await response.json();
-        setChatUsers(updatedChatUsers);
+        const result = await response.json();
+        console.log("Add user response:", result); // Debug log
+        
+        // Handle different possible response formats
+        if (Array.isArray(result)) {
+          // If the response is the updated array of chat users
+          setChatUsers(result);
+        } else if (result.chatUsers) {
+          // If the response has a chatUsers property
+          setChatUsers(result.chatUsers);
+        } else if (result.user || result.addedUser) {
+          // If the response contains the added user, add it to existing list
+          const addedUser = result.user || result.addedUser;
+          setChatUsers(prev => {
+            // Check if user already exists to avoid duplicates
+            const existsAlready = prev.some(u => 
+              (u.id || u._id) === (addedUser.id || addedUser._id)
+            );
+            if (existsAlready) return prev;
+            return [...prev, addedUser];
+          });
+        } else {
+          // Fallback: refetch all chat users
+          await fetchChatUsers();
+        }
+        
         toast.success("User added to chat successfully");
         closeAddUserPopup();
       } else {
@@ -112,7 +138,16 @@ export const Sidebar: FC<SidebarProps> = ({
       if (isAddUserPopupOpen) searchUsers(searchQuery);
     }, 300);
     return () => clearTimeout(timer);
-  }, [searchQuery]);
+  }, [searchQuery, isAddUserPopupOpen]);
+
+  // Helper function to get user ID (handles both id and _id)
+  const getUserId = (user: User) => user.id || user._id;
+
+  // Filter out users that are already in chat from search results
+  const availableUsers = users.filter(user => {
+    const userId = getUserId(user);
+    return !chatUsers.some(chatUser => getUserId(chatUser) === userId) && userId !== currentUserId;
+  });
 
   return (
     <>
@@ -143,12 +178,14 @@ export const Sidebar: FC<SidebarProps> = ({
             <div className="max-h-60 overflow-y-auto space-y-2">
               {loading ? (
                 <p className="text-center text-gray-500 dark:text-[#a0a0a0]">Searching...</p>
-              ) : users.length === 0 ? (
-                <p className="text-center text-gray-500 dark:text-[#a0a0a0]">No matching users found</p>
+              ) : availableUsers.length === 0 && searchQuery.trim() ? (
+                <p className="text-center text-gray-500 dark:text-[#a0a0a0]">
+                  {users.length === 0 ? "No matching users found" : "All matching users are already in your chat"}
+                </p>
               ) : (
-                users.map((user) => (
+                availableUsers.map((user) => (
                   <div
-                    key={user._id}
+                    key={getUserId(user)}
                     className="flex items-center justify-between p-2 border rounded-lg hover:bg-gray-100 dark:hover:bg-[#1a1a1a] dark:border-[#2d2d2d]"
                   >
                     <div className="flex items-center space-x-3">
@@ -161,11 +198,11 @@ export const Sidebar: FC<SidebarProps> = ({
                     </div>
                     <Button
                       size="sm"
-                      onClick={() => addUserToChat(user._id)}
-                      disabled={addingUserId === user._id}
-                      className="hover:bg-gray-100 dark:hover:bg-[#1a1a1a]"
+                      onClick={() => addUserToChat(getUserId(user))}
+                      disabled={addingUserId === getUserId(user)}
+                      className="  text-white dark:text-black dark:hover:bg-zinc-300"
                     >
-                      {addingUserId === user._id ? "Adding..." : "Add"}
+                      {addingUserId === getUserId(user) ? "Adding..." : "Add"}
                     </Button>
                   </div>
                 ))
@@ -187,7 +224,7 @@ export const Sidebar: FC<SidebarProps> = ({
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold text-gray-800 dark:text-[#e0e0e0]">Users</h2>
               <Button variant="ghost" size="icon" onClick={() => setIsOpen(false)}>
-                <X className="h-5 w-5 text-gray-600 dark:text-[#e0e0e0]" />
+                <X className="h-5 w-5 text-gray-600  dark:text-[#e0e0e0]" />
               </Button>
             </div>
             <Button className="w-full" onClick={() => setIsAddUserPopupOpen(true)}>
@@ -204,9 +241,9 @@ export const Sidebar: FC<SidebarProps> = ({
               ) : (
                 chatUsers.map((user) => (
                   <div
-                    key={user.id}
+                    key={getUserId(user)}
                     className={`p-3 rounded-xl transition cursor-pointer border-gray-400 dark:border-[#2d2d2d]
-                      ${selectedUser?.id === user.id
+                      ${selectedUser && getUserId(selectedUser) === getUserId(user)
                         ? "bg-zinc-300 dark:bg-[#2d2d2d] dark:text-[#e0e0e0]"
                         : "hover:bg-gray-100 dark:hover:bg-[#2d2d2d] border-transparent dark:text-[#e0e0e0]"
                       }`}
