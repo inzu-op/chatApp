@@ -1,4 +1,4 @@
-import { FC, useState, useEffect } from "react";
+import { FC, useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { User } from "@/app/types";
 import Navbar from "./Navbar";
@@ -6,8 +6,8 @@ import { Trash2, X, UserCircle, Info, Loader2, LogOut, UserPlus, Search } from "
 import { Input } from "@/components/ui/input";
 import { toast } from "react-hot-toast";
 import ChatMsg from "./chatmsg";
-import { motion, AnimatePresence } from "framer-motion";
-import { useSocket } from '@/app/hooks/useSocket';
+import { motion } from "framer-motion";
+import { io, Socket } from "socket.io-client";
 
 interface ChatWindowProps {
   isOpen: boolean;
@@ -21,6 +21,7 @@ interface Message {
   sender: "me" | "them";
   text: string;
   timestamp: Date;
+  read?: boolean;
 }
 
 export const ChatWindow: FC<ChatWindowProps> = ({
@@ -42,11 +43,93 @@ export const ChatWindow: FC<ChatWindowProps> = ({
   const [users, setUsers] = useState<User[]>([]);
   const [addingUserId, setAddingUserId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const socketRef = useRef<Socket | null>(null);
 
-  // Initialize socket at component level
-  const { sendMessage, onNewMessage } = useSocket(currentUserId || '');
+  const getUserId = (user: User) => user?._id || user?.id;
 
-  const getUserId = (user: User) => user._id || user.id;
+  // Initialize socket connection
+  useEffect(() => {
+    if (!currentUserId) return;
+
+    socketRef.current = io('http://localhost:3000', {
+      path: '/api/socket',
+      transports: ['polling', 'websocket'],
+      reconnection: true,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000,
+      withCredentials: true,
+      query: { userId: currentUserId }
+    });
+
+    const socket = socketRef.current;
+
+    socket.on('connect', () => {
+      console.log('Socket connected:', socket.id);
+      socket.emit('join-chat', currentUserId);
+    });
+
+    socket.on('disconnect', (reason) => {
+      console.log('Socket disconnected:', reason);
+    });
+
+    socket.on('connect_error', (err) => {
+      console.error('Socket connection error:', err);
+      toast.error('Connection error. Please refresh the page.');
+    });
+
+    socket.on('new-message', (data) => {
+      if (selectedUser && (data.senderId === getUserId(selectedUser) || data.receiverId === getUserId(selectedUser))) {
+        setMessagesByUser(prev => {
+          const userId = getUserId(selectedUser);
+          const prevMsgs = prev[userId] || [];
+          return {
+            ...prev,
+            [userId]: [...prevMsgs, {
+              sender: data.senderId === currentUserId ? 'me' : 'them',
+              text: data.text,
+              timestamp: new Date(data.timestamp),
+              read: false
+            }]
+          };
+        });
+      }
+    });
+
+    return () => {
+      if (socket.connected) {
+        socket.emit('leave-chat', currentUserId);
+        socket.disconnect();
+      }
+    };
+  }, [currentUserId, selectedUser]);
+
+  // Fetch initial messages when a user is selected
+  useEffect(() => {
+    if (!selectedUser || !getUserId(selectedUser) || !currentUserId) return;
+
+    const fetchInitialMessages = async () => {
+      try {
+        const userId = getUserId(selectedUser);
+        const res = await fetch(`/api/messages?userId=${userId}&currentUserId=${currentUserId}`);
+        if (!res.ok) throw new Error('Failed to fetch messages');
+        const messages = await res.json();
+        setMessagesByUser(prev => ({
+          ...prev,
+          [userId]: messages.map((msg: any) => ({
+            sender: msg.sender._id === currentUserId ? 'me' : 'them',
+            text: msg.text,
+            timestamp: new Date(msg.timestamp),
+            read: msg.read
+          }))
+        }));
+      } catch (error) {
+        console.error('Error fetching messages:', error);
+        toast.error('Failed to fetch messages');
+      }
+    };
+
+    fetchInitialMessages();
+  }, [selectedUser, currentUserId]);
 
   // Fetch current user info
   useEffect(() => {
@@ -81,74 +164,24 @@ export const ChatWindow: FC<ChatWindowProps> = ({
     return () => clearInterval(interval);
   }, [currentUserId]);
 
-  // Handle new messages
-  useEffect(() => {
-    if (!selectedUser || !currentUserId) return;
-
-    const handleNewMessage = (data: any) => {
-      if (data.senderId === getUserId(selectedUser) || data.receiverId === getUserId(selectedUser)) {
-        setMessagesByUser(prev => {
-          const userId = getUserId(selectedUser);
-          const prevMsgs = prev[userId] || [];
-          return {
-            ...prev,
-            [userId]: [...prevMsgs, {
-              sender: data.senderId === currentUserId ? 'me' : 'them',
-              text: data.text,
-              timestamp: new Date(data.timestamp),
-              read: false
-            }]
-          };
-        });
-      }
-    };
-
-    onNewMessage(handleNewMessage);
-  }, [selectedUser, currentUserId, onNewMessage]);
-
-  // Fetch initial messages
-  useEffect(() => {
-    if (!selectedUser || !currentUserId) return;
-
-    const fetchInitialMessages = async () => {
-      try {
-        const res = await fetch(`/api/messages?userId=${getUserId(selectedUser)}&currentUserId=${currentUserId}`);
-        if (!res.ok) throw new Error('Failed to fetch messages');
-        const messages = await res.json();
-        setMessagesByUser(prev => ({
-          ...prev,
-          [getUserId(selectedUser)]: messages.map((msg: any) => ({
-            sender: msg.sender._id === currentUserId ? 'me' : 'them',
-            text: msg.text,
-            timestamp: new Date(msg.timestamp),
-            read: msg.read
-          }))
-        }));
-      } catch (error) {
-        console.error('Error fetching messages:', error);
-        toast.error('Failed to fetch messages');
-      }
-    };
-
-    fetchInitialMessages();
-  }, [selectedUser, currentUserId]);
-
-  // Update handleSend to use WebSocket
+  // Handle sending messages
   const handleSend = async () => {
-    if (!input.trim() || !selectedUser || !currentUserId) {
-      toast.error('Please select a user to chat with');
+    if (!input.trim() || !selectedUser || !getUserId(selectedUser) || !currentUserId) {
+      toast.error('Please select a valid user to chat with');
       return;
     }
+
+    const receiverId = getUserId(selectedUser);
 
     try {
       const messageData = {
         text: input.trim(),
-        receiverId: getUserId(selectedUser),
+        receiverId,
         senderId: currentUserId,
-        timestamp: new Date()
+        timestamp: new Date().toISOString()
       };
+      console.log("Sending message data:", messageData);
 
-      // Send message to API
       const res = await fetch('/api/messages', {
         method: 'POST',
         headers: {
@@ -162,8 +195,10 @@ export const ChatWindow: FC<ChatWindowProps> = ({
         throw new Error(errorData.error || 'Failed to send message');
       }
 
-      // Send message through WebSocket
-      sendMessage(messageData);
+      // Send message through socket
+      if (socketRef.current?.connected) {
+        socketRef.current.emit('send-message', messageData);
+      }
 
       // Update local state
       setMessagesByUser(prev => {
@@ -187,7 +222,7 @@ export const ChatWindow: FC<ChatWindowProps> = ({
   };
 
   const handleClearChat = async () => {
-    if (!selectedUser || !currentUserId) {
+    if (!selectedUser || !getUserId(selectedUser) || !currentUserId) {
       toast.error('Please select a user to clear chat with');
       return;
     }
@@ -199,14 +234,13 @@ export const ChatWindow: FC<ChatWindowProps> = ({
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           userId: currentUserId,
           targetUserId: getUserId(selectedUser)
         }),
       });
 
       if (res.ok) {
-        // Clear messages from state
         setMessagesByUser(prev => {
           const newMsgs = { ...prev };
           delete newMsgs[getUserId(selectedUser)];
@@ -226,8 +260,8 @@ export const ChatWindow: FC<ChatWindowProps> = ({
   };
 
   const handleDeleteUser = async () => {
-    if (!selectedUser) return;
-    
+    if (!selectedUser || !getUserId(selectedUser)) return;
+
     setIsLoading(true);
     try {
       const res = await fetch("/api/users/remove-chat", {
@@ -235,9 +269,9 @@ export const ChatWindow: FC<ChatWindowProps> = ({
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           userId: currentUserId,
-          targetUserId: getUserId(selectedUser) 
+          targetUserId: getUserId(selectedUser)
         }),
       });
 
@@ -246,10 +280,9 @@ export const ChatWindow: FC<ChatWindowProps> = ({
         if (result.success && Array.isArray(result.chatUsers)) {
           setChatUsers(result.chatUsers);
         } else {
-          // Fallback to filtering if the response format is unexpected
           setChatUsers(prev => prev.filter(user => getUserId(user) !== getUserId(selectedUser)));
         }
-        
+
         setMessagesByUser((prev) => {
           const newMsgs = { ...prev };
           if (selectedUser) delete newMsgs[getUserId(selectedUser)];
@@ -270,10 +303,10 @@ export const ChatWindow: FC<ChatWindowProps> = ({
     }
   };
 
-  const filteredMessages = selectedUser
+  const filteredMessages = selectedUser && getUserId(selectedUser)
     ? (messagesByUser[getUserId(selectedUser)] || []).filter((msg) =>
-    msg.text.toLowerCase().includes(searchTerm.toLowerCase())
-      )
+      msg.text.toLowerCase().includes(searchTerm.toLowerCase())
+    )
     : [];
 
   const closeAddUserPopup = () => {
@@ -314,14 +347,14 @@ export const ChatWindow: FC<ChatWindowProps> = ({
         transition={{ type: "spring", stiffness: 300, damping: 30 }}
         className="sticky top-0 z-50 bg-white dark:bg-[#0a0a0a] shadow-sm"
       >
-      <Navbar
-        onMenuClick={() => setIsOpen(true)}
-        selectedUser={selectedUser}
-        chatUsers={chatUsers}
-        isOpen={isOpen}
-        onUserSelect={setSelectedUser}
-        currentUser={currentUser}
-      />
+        <Navbar
+          onMenuClick={() => setIsOpen(true)}
+          selectedUser={selectedUser}
+          chatUsers={chatUsers}
+          isOpen={isOpen}
+          onUserSelect={setSelectedUser}
+          currentUser={currentUser}
+        />
       </motion.div>
 
       {!selectedUser ? (
@@ -332,14 +365,12 @@ export const ChatWindow: FC<ChatWindowProps> = ({
         </div>
       ) : (
         <>
-          {/* Chat Header */}
           <motion.div
             initial={{ y: 0 }}
             animate={{ y: 0 }}
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
             className="sticky top-[60px] z-40 border border-gray-400 mt-5 p-2 bg-white flex justify-between items-center gap-4 dark:bg-[#0a0a0a] dark:text-[#e0e0e0] dark:border-[#2d2d2d] shadow-sm"
           >
-            {/* Left: User Icon + Name */}
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 bg-gray-300 dark:bg-[#1a1a1a] rounded-md flex items-center justify-center">
                 <span className="text-sm font-medium text-gray-600 dark:text-[#e0e0e0]">
@@ -349,7 +380,6 @@ export const ChatWindow: FC<ChatWindowProps> = ({
               <h1 className="text-xl font-bold text-gray-800 dark:text-[#e0e0e0]">{selectedUser.name}</h1>
             </div>
 
-            {/* Right: Search + Info */}
             <div className="flex items-center gap-3">
               <input
                 type="text"
@@ -375,7 +405,6 @@ export const ChatWindow: FC<ChatWindowProps> = ({
             />
           </div>
 
-          {/* About Modal */}
           {showAbout && (
             <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-start justify-center pt-24 z-50">
               <div className="bg-white dark:bg-[#0a0a0a] rounded-xl shadow-2xl w-96 p-6 relative">
@@ -448,7 +477,6 @@ export const ChatWindow: FC<ChatWindowProps> = ({
             </div>
           )}
 
-          {/* Add User Popup */}
           {isAddUserPopupOpen && (
             <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
               <div className="bg-white dark:bg-[#0a0a0a] w-full max-w-md rounded-xl shadow-lg p-5 relative">

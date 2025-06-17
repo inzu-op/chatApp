@@ -1,17 +1,16 @@
 "use client";
-import { FC, useState } from "react";
+import { FC, useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Send } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { User } from "@/app/types";
-import { motion } from "framer-motion"; // <-- Import Framer Motion
+import { motion } from "framer-motion";
 
 interface Message {
   sender: "me" | "them";
   text: string;
   timestamp: Date;
   read?: boolean;
-  user?: User;
 }
 
 interface ChatMsgProps {
@@ -32,11 +31,22 @@ const ChatMsg: FC<ChatMsgProps> = ({
   selectedUser,
 }) => {
   const [isLoading, setIsLoading] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [filteredMessages]);
 
   const onKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
-      handleSend();
+      if (input.trim()) {
+        handleSend();
+      }
     }
   };
 
@@ -45,7 +55,7 @@ const ChatMsg: FC<ChatMsgProps> = ({
   };
 
   return (
-    <div className="h-full flex-1  flex flex-col bg-gray-50 dark:bg-[#0a0a0a]">
+    <div className="h-full flex-1 flex flex-col bg-gray-50 dark:bg-[#0a0a0a]">
       {/* Messages List */}
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
         {filteredMessages.map((msg, index) => {
@@ -90,10 +100,11 @@ const ChatMsg: FC<ChatMsgProps> = ({
             </motion.div>
           );
         })}
+        <div ref={messagesEndRef} />
       </div>
 
       {/* Message Input */}
-      <div className=" border-gray-400 border dark:border-[#2d2d2d] p-4 bg-white dark:bg-[#0a0a0a]">
+      <div className="border-gray-400 border dark:border-[#2d2d2d] p-4 bg-white dark:bg-[#0a0a0a]">
         <div className="flex items-center gap-2">
           <Input
             value={input}
@@ -105,7 +116,7 @@ const ChatMsg: FC<ChatMsgProps> = ({
           <Button
             onClick={handleSend}
             disabled={!input.trim() || isLoading}
-            className="bg-black hover:bg-black text-white dark:bg-zinc-600  dark:hover:bg-zinc-700"
+            className="bg-black hover:bg-black text-white dark:bg-zinc-600 dark:hover:bg-zinc-700"
           >
             <Send className="h-4 w-4 dark:text-white" />
           </Button>
