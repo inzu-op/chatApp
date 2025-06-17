@@ -47,6 +47,11 @@ const ioHandler = (req: NextApiRequest, res: NextApiResponse) => {
         });
       });
 
+      socket.on('typing', (data) => {
+        const { userId, receiverId } = data;
+        io.to(receiverId).emit('typing', { userId });
+      });
+
       socket.on('disconnect', (reason) => {
         console.log('Client disconnected:', socket.id, reason);
       });

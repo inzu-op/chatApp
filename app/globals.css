@@ -96,3 +96,15 @@ body {
   clip-path: polygon(0 0, 40% 0, 50% 30%, 60% 0, 100% 0, 100% 100%, 0% 100%);
   border-radius: 10px;
 }
+.sidebar-open {
+  overflow: hidden;
+}
+
+/* For better mobile appearance */
+@media (max-width: 768px) {
+  .sidebar-open {
+    position: absolute;
+    width: 100vw;
+    height: 100vh;
+  }
+}

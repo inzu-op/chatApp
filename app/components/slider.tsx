@@ -1,6 +1,6 @@
-import { FC, useEffect, useState } from "react";
+import { FC, useEffect, useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { motion } from "framer-motion";
+import { motion, PanInfo, useAnimation } from "framer-motion";
 import { X, Search, UserPlus, Trash2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { User } from "../types";
@@ -13,6 +13,22 @@ interface SidebarProps {
   currentUserId: string;
   selectedUser: User | null;
 }
+
+const useMediaQuery = (query: string) => {
+  const [matches, setMatches] = useState(false);
+
+  useEffect(() => {
+    const media = window.matchMedia(query);
+    if (media.matches !== matches) {
+      setMatches(media.matches);
+    }
+    const listener = () => setMatches(media.matches);
+    media.addListener(listener);
+    return () => media.removeListener(listener);
+  }, [matches, query]);
+
+  return matches;
+};
 
 export const Sidebar: FC<SidebarProps> = ({
   isOpen,
@@ -29,6 +45,10 @@ export const Sidebar: FC<SidebarProps> = ({
   const [isAddUserPopupOpen, setIsAddUserPopupOpen] = useState(false);
   const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
+
+  const controls = useAnimation();
+  const sidebarRef = useRef<HTMLDivElement>(null);
+  const isMobile = useMediaQuery("(max-width: 768px)");
 
   const fetchChatUsers = async () => {
     try {
@@ -49,6 +69,18 @@ export const Sidebar: FC<SidebarProps> = ({
   useEffect(() => {
     fetchChatUsers();
   }, [currentUserId]);
+
+  useEffect(() => {
+    if (isOpen) {
+      controls.start("open");
+      if (isMobile) {
+        document.body.classList.add('sidebar-open');
+      }
+    } else {
+      controls.start("closed");
+      document.body.classList.remove('sidebar-open');
+    }
+  }, [isOpen, controls, isMobile]);
 
   const searchUsers = async (query: string) => {
     if (!query.trim()) {
@@ -95,7 +127,7 @@ export const Sidebar: FC<SidebarProps> = ({
         } else if (result.user || result.addedUser) {
           const addedUser = result.user || result.addedUser;
           setChatUsers(prev => {
-            const existsAlready = prev.some(u => 
+            const existsAlready = prev.some(u =>
               (u.id || u._id) === (addedUser.id || addedUser._id)
             );
             if (existsAlready) return prev;
@@ -104,7 +136,7 @@ export const Sidebar: FC<SidebarProps> = ({
         } else {
           await fetchChatUsers();
         }
-        
+
         toast.success("User added to chat successfully");
         closeAddUserPopup();
       } else {
@@ -135,14 +167,13 @@ export const Sidebar: FC<SidebarProps> = ({
         if (result.success && Array.isArray(result.chatUsers)) {
           setChatUsers(result.chatUsers);
         } else {
-          // Fallback to filtering if the response format is unexpected
           setChatUsers(prev => prev.filter(user => getUserId(user) !== targetUserId));
         }
-        
+
         if (selectedUser && getUserId(selectedUser) === targetUserId) {
           setSelectedUser(null);
         }
-        
+
         setShowDeleteConfirm(null);
         toast.success("User removed from chat successfully");
       } else {
@@ -163,6 +194,33 @@ export const Sidebar: FC<SidebarProps> = ({
     setUsers([]);
   };
 
+  const handleDragEnd = (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
+    const threshold = isMobile ? 100 : 50;
+    if (info.offset.x < -threshold) {
+      setIsOpen(false);
+    } else {
+      controls.start("open");
+    }
+  };
+
+  const variants = {
+    open: {
+      x: 0,
+      width: isMobile ? "100vw" : 400,
+      opacity: 1
+    },
+    closed: {
+      x: isMobile ? "-100%" : 0,
+      width: isMobile ? 0 : 0,
+      opacity: isMobile ? 0 : 1
+    }
+  };
+
+  const overlayVariants = {
+    open: { opacity: 1, pointerEvents: "auto" },
+    closed: { opacity: 0, pointerEvents: "none" }
+  };
+
   useEffect(() => {
     const timer = setTimeout(() => {
       if (isAddUserPopupOpen) searchUsers(searchQuery);
@@ -179,6 +237,98 @@ export const Sidebar: FC<SidebarProps> = ({
 
   return (
     <>
+      {/* Overlay */}
+      <motion.div
+        initial="closed"
+        animate={isOpen ? "open" : "closed"}
+        variants={overlayVariants}
+        transition={{ duration: 0.2 }}
+        className="fixed inset-0 bg-black/50 z-40 md:hidden"
+        onClick={() => setIsOpen(false)}
+      />
+
+      {/* Sidebar */}
+      <motion.div
+        ref={sidebarRef}
+        initial="closed"
+        animate={controls}
+        variants={variants}
+        transition={{ type: "spring", stiffness: 300, damping: 30 }}
+        drag={isMobile ? "x" : false}
+        dragConstraints={{ left: 0, right: 0 }}
+        dragElastic={0.1}
+        onDragEnd={handleDragEnd}
+        className={`fixed md:relative z-50 h-full bg-white dark:bg-[#1a1a1a] dark:text-[#e0e0e0] border-r border-gray-400 dark:border-[#2d2d2d] shadow-md overflow-hidden`}
+      >
+        <div className="flex flex-col h-full">
+          <div className="p-4 border-gray-400 dark:border-[#2d2d2d]">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-gray-800 dark:text-[#e0e0e0] mt-20 md:mt-2">
+                Users
+              </h2>
+              <Button variant="ghost" size="icon" onClick={() => setIsOpen(false)}>
+                <X className="h-5 w-5 text-gray-600 dark:text-[#e0e0e0]" />
+              </Button>
+            </div>
+            <Button className="w-full" onClick={() => setIsAddUserPopupOpen(true)}>
+              <UserPlus className="h-4 w-4 mr-2" />
+              Add User
+            </Button>
+          </div>
+
+          <div className="overflow-y-auto flex-1 p-4">
+            <h3 className="text-sm font-medium text-gray-500 mb-2 dark:text-[#a0a0a0]">Chat Users</h3>
+            <div className="space-y-2">
+              {chatUsers.length === 0 ? (
+                <div className="text-center text-gray-500 dark:text-[#a0a0a0]">No users added to chat</div>
+              ) : (
+                chatUsers.map((user) => (
+                  <div
+                    key={getUserId(user)}
+                    className={`group p-3 rounded-xl transition cursor-pointer border-gray-400 dark:border-[#2d2d2d]
+                      ${selectedUser && getUserId(selectedUser) === getUserId(user)
+                        ? "bg-zinc-300 dark:bg-[#2d2d2d] dark:text-[#e0e0e0]"
+                        : "hover:bg-gray-100 dark:hover:bg-[#2d2d2d] border-transparent dark:text-[#e0e0e0]"
+                      }`}
+                    onClick={() => {
+                      setSelectedUser(user);
+                      if (isMobile) setIsOpen(false);
+                    }}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 bg-gray-300 dark:bg-[#333333] rounded-full flex items-center justify-center">
+                          <span className="text-lg font-medium text-gray-600 dark:text-[#e0e0e0]">
+                            {user.name.charAt(0).toUpperCase()}
+                          </span>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-gray-800 truncate dark:text-[#e0e0e0]">{user.name}</p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setShowDeleteConfirm(getUserId(user));
+                        }}
+                        className={`opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-full 
+                          ${deletingUserId === getUserId(user) ? "opacity-100" : ""}
+                          hover:bg-gray-200 dark:hover:bg-[#333333] text-gray-500 dark:text-[#a0a0a0]
+                          hover:text-red-500 dark:hover:text-red-400`}
+                        disabled={deletingUserId === getUserId(user)}
+                        aria-label="Remove user"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      </motion.div>
+
       {/* Add User Popup */}
       {isAddUserPopupOpen && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
@@ -246,10 +396,10 @@ export const Sidebar: FC<SidebarProps> = ({
           <div className="bg-white dark:bg-[#0a0a0a] w-full max-w-md rounded-xl shadow-lg p-5 relative">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-gray-800 dark:text-[#e0e0e0]">Confirm Removal</h3>
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                onClick={() => setShowDeleteConfirm(null)} 
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setShowDeleteConfirm(null)}
                 className="hover:bg-gray-100 dark:hover:bg-[#1a1a1a]"
               >
                 <X className="h-5 w-5 text-gray-600 dark:text-[#e0e0e0]" />
@@ -261,15 +411,15 @@ export const Sidebar: FC<SidebarProps> = ({
             </p>
 
             <div className="flex justify-end space-x-3">
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 onClick={() => setShowDeleteConfirm(null)}
                 className="border-gray-300 dark:border-[#2d2d2d] hover:bg-gray-100 dark:hover:bg-[#1a1a1a]"
               >
                 Cancel
               </Button>
-              <Button 
-                variant="destructive" 
+              <Button
+                variant="destructive"
                 onClick={() => removeUserFromChat(showDeleteConfirm)}
                 disabled={deletingUserId === showDeleteConfirm}
                 className="bg-red-500 hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700"
@@ -280,77 +430,6 @@ export const Sidebar: FC<SidebarProps> = ({
           </div>
         </div>
       )}
-
-      {/* Sidebar */}
-      <motion.div
-        initial={{ width: 0 }}
-        animate={{ width: isOpen ? 400 : 0 }}
-        transition={{ duration: 0.3 }}
-        className=" bg-white dark:bg-[#1a1a1a] dark:text-[#e0e0e0] border-r border-gray-400 dark:border-[#2d2d2d] shadow-md overflow-hidden h-full"
-      >
-        <div className="flex flex-col h-full">
-          <div className="p-4 border-gray-400 dark:border-[#2d2d2d]">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-gray-800 dark:text-[#e0e0e0]">Users</h2>
-              <Button variant="ghost" size="icon" onClick={() => setIsOpen(false)}>
-                <X className="h-5 w-5 text-gray-600 dark:text-[#e0e0e0]" />
-              </Button>
-            </div>
-            <Button className="w-full" onClick={() => setIsAddUserPopupOpen(true)}>
-              <UserPlus className="h-4 w-4 mr-2" />
-              Add User
-            </Button>
-          </div>
-
-          <div className="overflow-y-auto flex-1 p-4">
-            <h3 className="text-sm font-medium text-gray-500 mb-2 dark:text-[#a0a0a0]">Chat Users</h3>
-            <div className="space-y-2">
-              {chatUsers.length === 0 ? (
-                <div className="text-center text-gray-500 dark:text-[#a0a0a0]">No users added to chat</div>
-              ) : (
-                chatUsers.map((user) => (
-                  <div
-                    key={getUserId(user)}
-                    className={`group p-3 rounded-xl transition cursor-pointer border-gray-400 dark:border-[#2d2d2d]
-                      ${selectedUser && getUserId(selectedUser) === getUserId(user)
-                        ? "bg-zinc-300 dark:bg-[#2d2d2d] dark:text-[#e0e0e0]"
-                        : "hover:bg-gray-100 dark:hover:bg-[#2d2d2d] border-transparent dark:text-[#e0e0e0]"
-                      }`}
-                    onClick={() => setSelectedUser(user)}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 bg-gray-300 dark:bg-[#333333] rounded-full flex items-center justify-center">
-                          <span className="text-lg font-medium text-gray-600 dark:text-[#e0e0e0]">
-                            {user.name.charAt(0).toUpperCase()}
-                          </span>
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium text-gray-800 truncate dark:text-[#e0e0e0]">{user.name}</p>
-                        </div>
-                      </div>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setShowDeleteConfirm(getUserId(user));
-                        }}
-                        className={`opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-full 
-                          ${deletingUserId === getUserId(user) ? "opacity-100" : ""}
-                          hover:bg-gray-200 dark:hover:bg-[#333333] text-gray-500 dark:text-[#a0a0a0]
-                          hover:text-red-500 dark:hover:text-red-400`}
-                        disabled={deletingUserId === getUserId(user)}
-                        aria-label="Remove user"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-        </div>
-      </motion.div>
     </>
   );
 };

@@ -20,6 +20,7 @@ interface ChatMsgProps {
   handleSend: () => void;
   currentUser: User | null;
   selectedUser: User | null;
+  isTyping?: boolean;
 }
 
 const ChatMsg: FC<ChatMsgProps> = ({
@@ -29,6 +30,7 @@ const ChatMsg: FC<ChatMsgProps> = ({
   handleSend,
   currentUser,
   selectedUser,
+  isTyping = false,
 }) => {
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -100,6 +102,26 @@ const ChatMsg: FC<ChatMsgProps> = ({
             </motion.div>
           );
         })}
+        {isTyping && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex justify-start"
+          >
+            <div className="flex items-end gap-2">
+              <div className="w-8 h-8 rounded-full bg-black mt-2 dark:bg-zinc-800 flex items-center justify-center text-sm font-medium text-white">
+                {selectedUser?.name.charAt(0).toUpperCase()}
+              </div>
+              <div className="bg-gray-100 dark:bg-[#1a1a1a] rounded-lg p-3 max-w-[70%]">
+                <div className="flex space-x-1">
+                  <div className="w-2 h-2 bg-gray-400 dark:bg-gray-600 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                  <div className="w-2 h-2 bg-gray-400 dark:bg-gray-600 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                  <div className="w-2 h-2 bg-gray-400 dark:bg-gray-600 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
         <div ref={messagesEndRef} />
       </div>
 
