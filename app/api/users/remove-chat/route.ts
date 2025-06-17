@@ -18,7 +18,6 @@ export async function POST(req: Request) {
       );
     }
 
-    // Validate ObjectIds
     if (!mongoose.Types.ObjectId.isValid(userId) || !mongoose.Types.ObjectId.isValid(targetUserId)) {
       console.log('Invalid ObjectId format:', { userId, targetUserId });
       return NextResponse.json(

@@ -1,9 +1,6 @@
 "use client";
 import React, { useState } from 'react';
-import {
-  LogOut, Trash2, X, Loader2,
-  UserCog2
-} from 'lucide-react';
+import { LogOut, Trash2, X, Loader2, UserCog2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { User } from '@/app/types';
 import { useRouter } from 'next/navigation';
@@ -34,32 +31,20 @@ const Navbar: React.FC<NavbarProps> = ({
   const handleLogout = async () => {
     try {
       setIsLoading(true);
-
-      // Call logout API
-      const response = await fetch("/api/auth/logout", {
+      await fetch("/api/auth/logout", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         credentials: "include",
       });
 
-      if (!response.ok) {
-        throw new Error("Logout failed");
-      }
-
-      // Clear all client-side storage
       localStorage.clear();
       sessionStorage.clear();
-
-      // Clear any cookies that might be set
       document.cookie.split(";").forEach((c) => {
         document.cookie = c
           .replace(/^ +/, "")
           .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
       });
 
-      // Force a complete page reload and redirect
       window.location.replace("/login");
     } catch (error) {
       console.error("Logout error:", error);
@@ -75,17 +60,17 @@ const Navbar: React.FC<NavbarProps> = ({
 
   return (
     <div className="relative bg-white dark:bg-[#0a0a0a] rounded-b-2xl shadow-sm z-10">
-      {/* Copilot icon button: always visible, never covered, fixed on the left */}
+
+      {/* Sidebar Toggle Button */}
       {!isOpen && (
-      <Button
-      variant="ghost"
-      size="icon"
-      onClick={onMenuClick}
-      className="absolute left-2 sm:left-4 z-20 hover:bg-gray-100 dark:hover:bg-[#1a1a1a] transition-all sm:inline-flex"
-    >
-      <CopilotChatIcon />
-    </Button>
-    
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onMenuClick}
+          className="absolute left-2 sm:left-4 z-20 hover:bg-gray-100 dark:hover:bg-[#1a1a1a] transition-all sm:inline-flex"
+        >
+          <CopilotChatIcon />
+        </Button>
       )}
 
       {/* Theme Toggle */}
@@ -95,13 +80,17 @@ const Navbar: React.FC<NavbarProps> = ({
 
       {/* About Button */}
       <Button
-        variant="ghost"
-        size="icon"
-        onClick={() => setShowAbout(true)}
-        className="absolute right-2 sm:right-4 bg-white dark:bg-[#0a0a0a] hover:bg-gray-100 dark:hover:bg-[#1a1a1a] rounded-full transition-all"
-      >
-        <UserCog2 className="h-5 w-5 sm:h-6 sm:w-6 z-20 text-black dark:text-[#e0e0e0]" />
-      </Button>
+  variant="ghost"
+  size="icon"
+  onClick={() => {
+    console.log("About clicked");
+    setShowAbout(true);
+  }}
+  className="absolute right-2 sm:right-4 z-[9999] bg-white dark:bg-[#0a0a0a] hover:bg-gray-100 dark:hover:bg-[#1a1a1a] rounded-full transition-all"
+>
+  <UserCog2 className="h-5 w-5 sm:h-6 sm:w-6 z-20 text-black dark:text-[#e0e0e0]" />
+</Button>
+
 
       {/* User Switch Row */}
       <div className="rotate-180">
@@ -124,8 +113,7 @@ const Navbar: React.FC<NavbarProps> = ({
                       variant="ghost"
                       className={`w-7 h-7 sm:w-9 sm:h-9 p-0 rounded-md bg-white dark:bg-[#0a0a0a] hover:bg-gray-200 dark:hover:bg-[#1a1a1a]
                         text-black dark:text-[#e0e0e0] text-sm sm:text-base font-semibold shadow-md transition-all ease-in-out duration-200 
-                        ${isSelected ? 'ring-2 ring-white dark:ring-[#2d2d2d] scale-110' : 'opacity-60 hover:opacity-90'}
-                      `}
+                        ${isSelected ? 'ring-2 ring-white dark:ring-[#2d2d2d] scale-110' : 'opacity-60 hover:opacity-90'}`}
                       onClick={() => onUserSelect(user)}
                     >
                       {user.name.charAt(0).toUpperCase()}
@@ -142,7 +130,7 @@ const Navbar: React.FC<NavbarProps> = ({
 
       {/* About Modal */}
       {showAbout && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-start justify-center pt-16 sm:pt-24 z-50">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-start justify-center pt-16 sm:pt-24 z-[9999]">
           <div className="bg-white dark:bg-[#0a0a0a] rounded-xl shadow-2xl w-[90%] max-w-[384px] p-4 sm:p-6 relative mx-4">
             <Button
               variant="ghost"

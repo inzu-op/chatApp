@@ -1,8 +1,9 @@
+// CopilotChatIcon.tsx (✅ FIXED)
 import React from "react";
 
 export const CopilotChatIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
   <svg
-    className="w-4 h-4 sm:w-5 sm:h-5 text-black dark:text-[#e0e0e0]"
+    className="w-4 h-4"
     viewBox="0 0 16 16"
     fill="currentColor"
     xmlns="http://www.w3.org/2000/svg"
